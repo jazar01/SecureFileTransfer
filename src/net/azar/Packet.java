@@ -1,5 +1,10 @@
 package net.azar;
 
+/**
+ * Packet class defines a packet of data to be transferred.
+ *  the packet contains meta data and contains a payload.
+ *  the payload is the content that is being transferred.
+ */
 public class Packet {
     private byte[] clientID = new byte[16];
     private char ptype;

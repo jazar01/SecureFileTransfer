@@ -7,4 +7,6 @@ public class UnitTests {
     Packet p = new Packet("Client1", 'T', 0, testdata);
     boolean valid = p.IsValid();
     }
+
+    public static byte[] key = SecUtil.DeriveKey("bingo");
 }
