@@ -1,5 +1,7 @@
 package net.azar;
 
+import java.lang.reflect.Array;
+
 /**
  * Packet class defines a packet of data to be transferred.
  *  the packet contains meta data and contains a payload.
@@ -8,11 +10,8 @@ package net.azar;
 public class Packet {
     private byte[] clientID = new byte[16];
     private char ptype;
-    private int sequence;
     private byte flags;
-    private int dataLength;
-    private byte[] hash = new byte [20];   // sha1 hash
-    private byte[] data = new byte [4096]; // payload
+    private byte [] cipherPayLoad;
 
     public void setClientID(String ClientID)
     {
@@ -37,47 +36,33 @@ public class Packet {
         return ptype;
     }
 
-    public void setSequence(int seq)
-    {
-        sequence = seq;
-    }
-
-    public int getSequence()
-    {
-        return sequence;
-    }
-
     /**
      * @param DataBytes
      */
-    public void setDataBytes(byte[] DataBytes)
+    private void setDataBytes(byte[] DataBytes, byte [] key)
     {
-        data = DataBytes;
-        dataLength = data.length;
-        // encrypt data here
-        hash = SecUtil.getSHA1(data);
+        DataPayload payload = new DataPayload(DataBytes);
+        cipherPayLoad = SecUtil.Encrypt(payload.getSaltedData(),key );
     }
 
-    public byte[] getDataBytes()
+    public byte[] getDataBytes(byte [] key)
     {
-        //decrypt data here
-        return data;
+
+        return  SecUtil.Decrypt(cipherPayLoad, key);
     }
 
     // constructor
     /**
      * @param ClientID
      * @param PacketType
-     * @param Sequence
      * @param data
-     * @throws Exception
+     * @param key
      */
-    public Packet(String ClientID, char PacketType, int Sequence, byte[] data)
+    public Packet(String ClientID, char PacketType, byte[] data, byte[] key)
     {
         setClientID(ClientID);
         setPType(PacketType);
-        setSequence(Sequence);
-        setDataBytes(data);
+        setDataBytes(data, key);
         flags = 0;
     }
 
@@ -85,10 +70,7 @@ public class Packet {
 
     public boolean IsValid()
     {
-        if (!SecUtil.testSHA1(hash,data))
-            return false;
-        if (dataLength != data.length)
-            return false;
+
 
         return true;
     }

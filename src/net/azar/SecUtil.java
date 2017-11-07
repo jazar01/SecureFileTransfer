@@ -1,5 +1,7 @@
 package net.azar;
 
+
+import java.lang.reflect.Array;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -7,7 +9,9 @@ import java.util.Arrays;
 import java.security.SecureRandom;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.SecretKeyFactory;
-import java.security.spec.InvalidKeySpecException;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 
 public class SecUtil {
@@ -31,20 +35,28 @@ public class SecUtil {
 
 
     private static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA1";
-    private static final int SALT_BYTES = 16;
-    private static final int HASH_BYTES = 24;
+    private static final int SALT_BYTES = 8;
+    private static final int KEY_BYTES = 32;
+    private static final int IV_BYTES = 16;
     private static final int ITERATIONS = 1000;
 
+    /** derives an encryption key from a passphrase
+     * 
+     * @param passphrase
+     * @return
+     */
+    public static byte[] DeriveKey(String passphrase)  {
+        /*  Key is comprised of the salt + a derived key to equal a total of KEY_BYTES  */
+        byte[] salt = makeSalt();
+        byte[] key = pbkdf2(passphrase.toCharArray(), salt, ITERATIONS, KEY_BYTES - SALT_BYTES);
 
-    public static byte[] DeriveKey(String password)  {
-        byte [] salt = makeSalt();
-        byte[] key = pbkdf2(password.toCharArray(), salt, ITERATIONS, HASH_BYTES);
-        return key;
+        return ArrayUtil.arrayjoin(salt, key);
     }
 
 
     public static byte[] makeSalt()
     {
+
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[SALT_BYTES];
         random.nextBytes(salt);
@@ -75,4 +87,68 @@ public class SecUtil {
             return null;
         }
     }
+
+    /** AES Encrypt a byte array using specified key
+     *
+     * @param inData
+     * @param key
+     * @return
+     */
+    public static byte[] Encrypt(byte[] inData, byte[] key)
+    {
+        SecureRandom random = new SecureRandom();
+        byte[] randomIV = new byte[IV_BYTES];
+        random.nextBytes(randomIV);
+
+        IvParameterSpec iv = new IvParameterSpec(randomIV);
+        SecretKeySpec skey = new SecretKeySpec(key, "AES");
+
+
+        try
+        {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, skey, iv);
+
+            return ArrayUtil.arrayjoin(randomIV, cipher.doFinal(inData));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    public static byte [] Decrypt(byte [] inCipherData, byte key[])
+    {
+        byte [] randomIV = ArrayUtil.subarray(inCipherData, 0, IV_BYTES);
+        byte [] encrypteddata = ArrayUtil.subarray(inCipherData, IV_BYTES, inCipherData.length -IV_BYTES);
+
+        IvParameterSpec iv = new IvParameterSpec(randomIV);
+        SecretKeySpec skey = new SecretKeySpec(key, "AES");
+
+        Cipher cipher;
+        byte [] saltydata;
+        try
+        {
+            cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skey, iv);
+            saltydata = cipher.doFinal(encrypteddata);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+
+        byte [] unsalteddata = ArrayUtil.subarray(saltydata,SALT_BYTES, saltydata.length - SALT_BYTES - 20);
+        byte [] hash = ArrayUtil.subarray(saltydata, saltydata.length -20, 20);
+        // test data with hash to make sure it is not corrupt
+        if(!testSHA1(hash,unsalteddata))
+            return null;
+
+        return unsalteddata;
+    }
+
+
 }
