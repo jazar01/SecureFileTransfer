@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SecureFileTransfer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SecureFileTransfer_jar</output-path>
+    <root id="archive" name="SecureFileTransfer.jar">
+      <element id="module-output" name="SecureFileTransfer" />
+    </root>
+  </artifact>
+</component>

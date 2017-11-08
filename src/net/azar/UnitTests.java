@@ -3,14 +3,8 @@ package net.azar;
 import java.util.Arrays;
 
 public class UnitTests
-
 {
-
-
-
-
     public static byte[] key = SecUtil.DeriveKey("bingo");
-
 
     public static void PacketTest() throws Exception {
     byte[] testdata = "This is a block of test data for a test packet".getBytes();
@@ -23,10 +17,11 @@ public class UnitTests
     else
         System.out.println("Passed packet Integrity check");
 
-
     boolean valid = p.IsValid();
+
+    FileHeaderData fh = new FileHeaderData("test.dat", 10240);
+    byte [] fhbytes = fh.getBytes();
+    FileHeaderData fh2 = new FileHeaderData(fhbytes);
+
     }
-
-
-
 }
