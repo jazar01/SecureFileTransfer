@@ -28,11 +28,25 @@ public class ArrayUtil
         System.arraycopy(d, 0, result,a.length+b.length+c.length, d.length);
         return result;
         }
+
     public static byte[] subarray(byte [] a, int startindex, int length)
     {
         byte [] result = new byte[length];
         for (int i = 0; i < length; i++)
             result[i] = a[startindex + i];
         return result;
+    }
+
+    /** convert a byte array to hex string
+     *      for debugging and messages
+     * @param bytes
+     * @return
+     */
+    public static String bytesToHexString(byte[] bytes){
+    StringBuilder sb = new StringBuilder();
+    for(byte b : bytes){
+    sb.append(String.format("%02x", b&0xff));
+    }
+    return sb.toString();
     }
 }

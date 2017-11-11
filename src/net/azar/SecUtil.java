@@ -13,6 +13,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import static javafx.application.Platform.exit;
+
 
 public class SecUtil
 {
@@ -62,10 +64,12 @@ public class SecUtil
 
     public static byte[] makeSalt()
         {
-
+        //TODO fix this salt problem
+        // salted key should still be usable
         SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[SALT_BYTES];
-        random.nextBytes(salt);
+        // byte[] salt = new byte[SALT_BYTES];
+        // random.nextBytes(salt);
+        byte [] salt = {1,2,3,4,5,6,7,8};  // temporary fix for testing only
         return salt;
         }
 
@@ -135,7 +139,7 @@ public class SecUtil
         SecretKeySpec skey = new SecretKeySpec(key, "AES");
 
         Cipher cipher;
-        byte[] saltydata;
+        byte[] saltydata = null;
         try
             {
             cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
@@ -144,8 +148,14 @@ public class SecUtil
             }
         catch (Exception e)
             {
+            System.out.println("exception attempting to decrypt:");
+            System.out.println(ArrayUtil.bytesToHexString(encrypteddata));
+
+            System.out.println("using key:");
+            System.out.println(ArrayUtil.bytesToHexString(key));
+
             e.printStackTrace();
-            return null;
+            exit();
             }
 
         byte[] unsalteddata = ArrayUtil.subarray(saltydata, SALT_BYTES, saltydata.length - SALT_BYTES - 20);

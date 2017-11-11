@@ -1,6 +1,6 @@
 package net.azar;
-
-public class FileHeaderData
+import java.io.*;
+public class FileHeaderData implements Serializable
 {
     private String filename;
     private int length;
@@ -16,56 +16,52 @@ public class FileHeaderData
         length = Length;
         }
 
+    public String getFilename()
+        {
+        return filename;
+        }
+
+    public int getLength()
+        {
+        return length;
+        }
+
+    public boolean equals(FileHeaderData fhd)
+        {
+        if (!fhd.getFilename().equals( getFilename()))
+            return false;
+        if (fhd.getLength() != getLength())
+            return false;
+
+        return true;
+        }
+
     /**
-     * get the File Header Data as series of byes (serialize)
+     * Serialize the file header to a byte array
      * @return
+     * @throws IOException
      */
-    public byte[] getBytes()
+    public byte[] serialize() throws IOException
         {
-        byte[] delimeter = {0};
-        byte[] name = filename.getBytes();
-        byte[] len = Integer.toString(length).getBytes();
-        return ArrayUtil.arrayjoin(name, delimeter, len, delimeter);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(out);
+        os.writeObject(this);
+        return out.toByteArray();
         }
 
     /**
-     * Constructor
-     * @param bheader serialized header data
+     * Deserialze a byte array into a file header
+     * @param data
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
      */
-    public FileHeaderData(byte[] bheader)
+    public static FileHeaderData deserialize(byte[] data) throws IOException, ClassNotFoundException
         {
-        byte[] name = null;
-        byte[] len = null;
-
-        int i = 0;
-        while (i < bheader.length)
-            {
-            if (bheader[i] == 0)
-                {
-                name = new byte [i];
-                System.arraycopy(bheader, 0, name, 0, i);
-                i = name.length + 1;
-                break;
-                }
-            i++;
-            }
-        int n = i;
-        while (i < bheader.length)
-            {
-            if (bheader[i] == 0)
-                {
-                len = new byte[i - n];
-                System.arraycopy(bheader, n, len, 0, i - n);
-                break;
-                }
-            i++;
-            }
-
-        filename = new String(name);
-        length = Integer.parseInt(new String(len));
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        ObjectInputStream is = new ObjectInputStream(in);
+        return (FileHeaderData) is.readObject();
         }
-
-
 
 
 }
