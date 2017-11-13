@@ -35,7 +35,7 @@ public class Sender
         int buffersize = 4096;
         File file = new File(filename);
 
-        byte[] key = SecUtil.DeriveKey("bingo");
+        byte[] key = SecUtil.DeriveKey("bingo","Client1");
         System.out.println("Key = " + ArrayUtil.bytesToHexString(key));
 
         //  Send the file header first
@@ -51,12 +51,12 @@ public class Sender
 
         byte [] dataPacketSerialized;
         int bytesread = 0;
-        while (fs.read(buffer) > 0)
+        while ((bytesread = fs.read(buffer)) > 0)
             {
-            // todo strip out actual bytes read and put in separare buffer for writing
-
+            byte [] transmitBuffer = new byte[bytesread];
+            System.arraycopy(buffer,0,transmitBuffer, 0, bytesread);
             // put the buffer just read in to a packet
-            dataPacket = new Packet("Client1",'D', buffer, key );
+            dataPacket = new Packet("Client1",'D', transmitBuffer, key );
 
             // serialze the packet
             dataPacketSerialized = dataPacket.serialize();

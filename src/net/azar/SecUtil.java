@@ -52,13 +52,14 @@ public class SecUtil
      * @param passphrase
      * @return
      */
-    public static byte[] DeriveKey(String passphrase)
+    public static byte[] DeriveKey(String passphrase, String ClientID)
         {
+        byte [] ClientIDDHash = getSHA1(ClientID.getBytes());
         /*  Key is comprised of the salt + a derived key to equal a total of KEY_BYTES  */
-        byte[] salt = makeSalt();
-        byte[] key = pbkdf2(passphrase.toCharArray(), salt, ITERATIONS, KEY_BYTES - SALT_BYTES);
+        // byte[] salt = makeSalt();
+        byte[] key = pbkdf2(passphrase.toCharArray(), ClientIDDHash, ITERATIONS, KEY_BYTES);
 
-        return ArrayUtil.arrayjoin(salt, key);
+        return key;
         }
 
 
@@ -67,9 +68,9 @@ public class SecUtil
         //TODO fix this salt problem
         // salted key should still be usable
         SecureRandom random = new SecureRandom();
-        // byte[] salt = new byte[SALT_BYTES];
-        // random.nextBytes(salt);
-        byte [] salt = {1,2,3,4,5,6,7,8};  // temporary fix for testing only
+        byte[] salt = new byte[SALT_BYTES];
+        random.nextBytes(salt);
+        //byte [] salt = {1,2,3,4,5,6,7,8};  // temporary fix for testing only
         return salt;
         }
 
@@ -86,6 +87,7 @@ public class SecUtil
     private static byte[] pbkdf2(char[] password, byte[] salt, int iterations, int bytes)
         {
         PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, bytes * 8);
+
         try
             {
             SecretKeyFactory skf = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM);
@@ -95,6 +97,11 @@ public class SecUtil
             {
             e.printStackTrace();
             return null;
+            }
+        finally
+            {
+            // clear the password from memory
+            spec.clearPassword();
             }
         }
 

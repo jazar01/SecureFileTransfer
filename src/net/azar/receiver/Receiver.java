@@ -14,7 +14,7 @@ import java.net.Socket;
 
 public class Receiver extends Thread
 {
-
+    // TODO figure out how to make this run as one thread per transfer
     private ServerSocket ss;
 
     public Receiver(int port)
@@ -36,6 +36,7 @@ public class Receiver extends Thread
             {
             try
                 {
+                System.out.println("waiting for file");
                 Socket senderSock = ss.accept();
                 getFile(senderSock);
                 }
@@ -48,12 +49,11 @@ public class Receiver extends Thread
 
     private void getFile(Socket senderSock) throws IOException
         {
-
-
         // TODO get parameterrs from settings
+        // TODO Check packet types
+        // TODO error checking and exception handling
         // figure out how much overhhead room needs to be allocated
         int buffersize = 4276;  // Make sure we have enough room for expansion and overhead
-        byte[] key = SecUtil.DeriveKey("bingo");
         System.out.println("Preparing to receive data");
         DataInputStream ds = new DataInputStream(senderSock.getInputStream());
 
@@ -91,6 +91,9 @@ public class Receiver extends Thread
         /* attempt to extract and deserialize the file header from the encrypted
             payload.
          */
+
+        // the key to decrypt is derived from the Passphrase and ClientID
+        byte[] key = SecUtil.DeriveKey("bingo", p.getClientID());
         byte [] fileheaderbytes = null;
         try
             {
@@ -122,6 +125,8 @@ public class Receiver extends Thread
         System.out.println("Filename: " + filename);
         System.out.println("Filesize " + filesize);
 
+        // We have a filename and file size from the sender
+        // now create file at receiver location
         FileOutputStream fs = new FileOutputStream(filename);
 
         int read = 0;
@@ -130,13 +135,19 @@ public class Receiver extends Thread
         Packet packet = null;
 
         System.out.println("Key = " + ArrayUtil.bytesToHexString(key));
-        while ((read = ds.read(buffer, 0, Math.min(buffer.length, remaining))) > 0)
+        // read buffers from the socket until buffers stop comming
+        while ((read = ds.read(buffer)) > 0)
             {
             totalread += read;
-            remaining -= read;
+            // remaining -= read;
+
+            // copy the buffer to a raw data packet to truncate the buffer to
+            // exact size received.
             byte [] rawDatapacket = new byte[read];
             System.arraycopy(buffer,0,rawDatapacket,0,read);
             System.out.println("Received a packet of " + read + " bytes.  Total read = " + totalread);
+
+            // attemp to deserialize the raw data into a packet object
             try
                 {
                 packet = Packet.deserialize(rawDatapacket);
@@ -149,13 +160,22 @@ public class Receiver extends Thread
                 }
 
             System.out.println("received " + totalread + " bytes.");
-            // TODO Decrypt and extract data
+
+            // decrypt the data portion of packet into a byte array
             byte [] databytes = packet.getDataBytes(key);
             System.out.println("Unpacked " + databytes.length + " bytes");
+
+            // write the decrypted data bytes to the output file
             fs.write(databytes, 0, databytes.length);
             }
+
+        fs.close(); // close the output file
+        ds.close(); // close the socket
+
         System.out.println("Completed reading file");
         }
+
+
     public static void main(String[] args)
         {
         System.out.println("Receiver port 1988");
