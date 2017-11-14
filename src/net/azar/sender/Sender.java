@@ -74,7 +74,7 @@ public class Sender
     public static void main(String[] args)
         {
 
-        // TODO send filename and size first
+        // TODO configure host and port from command
         String filename = args[0];
         System.out.println("Sending file: " + filename + " on port 1988");
         Sender s = new Sender("localhost", 1988, filename);
