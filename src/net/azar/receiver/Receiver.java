@@ -38,7 +38,7 @@ public class Receiver extends Thread
                 {
                 System.out.println("waiting for file");
                 Socket senderSock = ss.accept();
-                getFile(senderSock);
+                getFile(senderSock); // TODO start a thread for this??
                 }
             catch (IOException e)
                 {
@@ -145,7 +145,7 @@ public class Receiver extends Thread
             // exact size received.
             byte [] rawDatapacket = new byte[read];
             System.arraycopy(buffer,0,rawDatapacket,0,read);
-            System.out.println("Received a packet of " + read + " bytes.  Total read = " + totalread);
+            // TODO System.out.println("Received a packet of " + read + " bytes.  Total read = " + totalread);
 
             // attemp to deserialize the raw data into a packet object
             try
@@ -159,11 +159,11 @@ public class Receiver extends Thread
                 Thread.currentThread().interrupt();
                 }
 
-            System.out.println("received " + totalread + " bytes.");
+            // TODO System.out.println("received " + totalread + " bytes.");
 
             // decrypt the data portion of packet into a byte array
             byte [] databytes = packet.getDataBytes(key);
-            System.out.println("Unpacked " + databytes.length + " bytes");
+            // TODO System.out.println("Unpacked " + databytes.length + " bytes");
 
             // write the decrypted data bytes to the output file
             fs.write(databytes, 0, databytes.length);
